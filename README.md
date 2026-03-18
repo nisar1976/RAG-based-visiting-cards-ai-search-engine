@@ -6,7 +6,7 @@
 
 A powerful AI-driven system for extracting, indexing, and searching visiting card information using OpenAI's Vision API and PostgreSQL semantic search.
 
-**Process 348+ business cards, extract structured data with 95%+ accuracy, and find them instantly with natural language queries.**
+**Process visiting cards, extract structured data with 95%+ accuracy, and find them instantly with natural language queries.**
 
 ---
 
@@ -26,11 +26,11 @@ npm install
 ### 2️⃣ Configure Environment
 Edit `backend/.env`:
 ```env
-DATABASE_URL=postgresql+asyncpg://postgres:password@localhost/visitingcards
-OPENAI_API_KEY=sk-proj-YOUR_KEY_HERE
+DATABASE_URL=postgresql+asyncpg://[username]:[password]@[host]:[port]/[database]
+OPENAI_API_KEY=sk-proj-[YOUR_API_KEY]
 ASSETS_DIR=assets
 PGVECTOR_DIMENSIONS=3072
-MAX_CARDS=20  # For testing; remove for all 348
+MAX_CARDS=20  # For testing; remove for full processing
 ```
 
 ### 3️⃣ Run the System
@@ -78,7 +78,7 @@ cd frontend && npm run dev
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │                     DATABASE                            │
-│   348+ Cards + Embeddings + IVFFlat Index              │
+│   Visiting Cards + Embeddings + IVFFlat Index          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -178,7 +178,7 @@ curl "http://localhost:8000/search-card?q=software%20engineer"
 ├── database/
 │   └── schema.sql          # PostgreSQL DDL
 │
-├── assets/                 # 348+ PNG cards
+├── assets/                 # PNG visiting card images
 │
 └── [Documentation files]
     ├── project.md          # Full technical brief
@@ -209,9 +209,9 @@ SELECT id, name, company, designation FROM cards LIMIT 10;
 
 ### Full Processing
 ```bash
-# Remove MAX_CARDS limit from backend/.env
+# Remove or set MAX_CARDS=0 in backend/.env
 # Restart backend
-# Full 348 cards will process (takes ~25-30 min)
+# All cards will process (takes ~25-30 min depending on scale)
 ```
 
 ---
@@ -234,10 +234,10 @@ SELECT id, name, company, designation FROM cards LIMIT 10;
 **`backend/.env`**:
 ```env
 # Database connection
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost/visitingcards
+DATABASE_URL=postgresql+asyncpg://[username]:[password]@[host]:[port]/[database]
 
-# OpenAI API key
-OPENAI_API_KEY=sk-proj-...
+# OpenAI API key (get from https://platform.openai.com/api-keys)
+OPENAI_API_KEY=sk-proj-[YOUR_API_KEY]
 
 # Assets directory
 ASSETS_DIR=assets

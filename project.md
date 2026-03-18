@@ -4,7 +4,7 @@
 
 A fully offline-capable system that intelligently extracts, indexes, and searches information from visiting card images using advanced OCR and semantic search capabilities. The system combines OpenAI's Vision API for accurate text extraction with PostgreSQL pgvector for semantic similarity search, enabling users to find business cards through natural language queries.
 
-The system processes 348+ PNG visiting card images, extracts 8 structured fields per card (name, designation, company, country, phone, email, address), and provides real-time semantic search capabilities through an intuitive web interface.
+The system processes visiting card images, extracts 8 structured fields per card (name, designation, company, country, phone, email, address), and provides real-time semantic search capabilities through an intuitive web interface.
 
 **Problem Solved**: Organizing and searching through hundreds of business card images without manual data entry or external dependencies. Traditional OCR often produces inconsistent results; this system leverages state-of-the-art vision models with intelligent field validation to achieve 95%+ extraction accuracy.
 
@@ -97,11 +97,11 @@ Extracts and validates 8 fields per card:
 - JSON-formatted extraction results
 - Confidence scores for every field
 - "Not Available" for fields that cannot be reliably extracted
-- Consistent across all 348+ cards
+- Consistent across all indexed cards
 
 ### 6. **Professional Web Interface**
 - Search bar with real-time query processing
-- Full cards table showing all 348+ cards with extracted data
+- Full cards table showing all indexed cards with extracted data
 - Card detail view with image and metadata
 - Download functionality (PNG format)
 - Print-friendly card display
@@ -109,7 +109,7 @@ Extracts and validates 8 fields per card:
 
 ### 7. **Test Mode Support**
 - `MAX_CARDS` environment variable for processing subsets
-- Validate on 20 cards before full 348-card processing
+- Validate on subset before full processing
 - Essential for cost control with OpenAI APIs
 
 ---
@@ -183,7 +183,7 @@ Extracts and validates 8 fields per card:
 #### 7. **database/schema.sql** (UPDATED)
 - Added `embedding vector(3072)` column
 - Created IVFFlat index on embeddings for fast search
-- Index configuration: `lists=100` (appropriate for 348 vectors)
+- Index configuration: `lists=100` (appropriate for typical scale)
 
 #### 8. **requirements.txt** (UPDATED)
 **Added**:
@@ -203,7 +203,7 @@ DATABASE_URL=postgresql+asyncpg://postgres:password@localhost/visitingcards
 OPENAI_API_KEY=sk-proj-...
 ASSETS_DIR=assets
 PGVECTOR_DIMENSIONS=3072
-MAX_CARDS=20  # For testing; remove or set to 0 for all 348
+MAX_CARDS=20  # For testing; remove or set to 0 for full processing
 ```
 
 ---
@@ -226,38 +226,14 @@ Based on test runs with first 20 cards:
 
 ### Sample Extraction Results
 
-**Card 1: Amer Ahmed Hashmi**
-```
-Name: Amer Ahmed Hashmi (Conf: 99%)
-Designation: Graphic Designer (Conf: 97%)
-Company: Creative Solutions LLC (Conf: 95%)
-Country: United Arab Emirates (Conf: 98%)
-Phone: +971-4-123-4567 (Conf: 89%)
-Email: amer@creative.ae (Conf: 96%)
-Address: Dubai, UAE (Conf: 85%)
-```
-
-**Card 3: Ehtesham Jerral**
-```
-Name: Ehtesham Jerral (Conf: 98%)
-Designation: Business Development Manager (Conf: 96%)
-Company: Global Enterprises (Conf: 94%)
-Country: Pakistan (Conf: 97%)
-Phone: +92-21-111-2233 (Conf: 88%)
-Email: ehtesham@global.com.pk (Conf: 95%)
-Address: Karachi, Pakistan (Conf: 84%)
-```
-
-**Card 4: Professor Shakil Jehangir Mali**
-```
-Name: Professor Shakil Jehangir Mali (Conf: 100%)
-Designation: Department Head, Computer Science (Conf: 99%)
-Company: University of Technology (Conf: 97%)
-Country: India (Conf: 98%)
-Phone: +91-22-444-5555 (Conf: 90%)
-Email: shakil.mali@university.edu.in (Conf: 98%)
-Address: Mumbai, India (Conf: 87%)
-```
+Example fields extracted per card (with confidence scores omitted for privacy):
+- **Name** - Person's full name
+- **Designation** - Job title/position
+- **Company** - Organization name
+- **Country** - Business location
+- **Phone** - Contact number
+- **Email** - Email address
+- **Address** - Physical address
 
 ### Improvement Metrics
 
@@ -330,7 +306,7 @@ User Interaction (view, download, print)
 | `GET` | `/health` | System health check | Status, indexing progress, embedder ready |
 | `POST` | `/process-assets` | Trigger card indexing | Indexing progress, completion status |
 | `GET` | `/search-card?q=` | Semantic search | Top card with all metadata |
-| `GET` | `/all-cards` | List all cards | Array of all 348+ cards |
+| `GET` | `/all-cards` | List all cards | Array of all indexed cards |
 | `GET` | `/cards/{id}` | Card metadata | Full card record as JSON |
 | `GET` | `/image/{id}` | Card image | PNG binary image file |
 
@@ -357,7 +333,7 @@ User Interaction (view, download, print)
 ✅ **Phase 4: Deployment Ready** - Ready
 - Backend operational at http://localhost:8000
 - Frontend operational at http://localhost:3000
-- Full processing possible (348+ cards)
+- Full processing possible for all indexed cards
 - Can be deployed to cloud (AWS, GCP, Azure)
 
 ---
@@ -448,7 +424,7 @@ Visit: http://localhost:3000
 
 ### Key Achievements
 - **Extraction Quality**: Improved accuracy from 75% to 95%+
-- **Scalability**: Optimized for 348+ cards with fast search (< 100ms)
+- **Scalability**: Optimized for visiting cards with fast search (< 100ms)
 - **User Experience**: Intuitive interface with real-time search and download
 - **Code Quality**: Clean, documented, testable code
 - **Cost Efficiency**: ~$0.70-1.20 per full reindex with OpenAI APIs
@@ -472,7 +448,7 @@ Visit: http://localhost:3000
 - `README.md` - Quick start and usage guide
 
 ✅ **Working System**:
-- 348+ PNG cards indexed and searchable
+- PNG cards indexed and searchable
 - FastAPI backend with OpenAI integration
 - Next.js frontend with real-time search
 - PostgreSQL pgvector database with IVFFlat index
@@ -481,7 +457,7 @@ Visit: http://localhost:3000
 ✅ **Performance**:
 - Search latency: < 100ms
 - Indexing: 2-5 seconds per card
-- Full 348 cards: ~25-30 minutes
+- Full processing: ~25-30 minutes depending on scale
 - Cost: ~$0.70-1.20 per full reindex
 
 ---
@@ -490,7 +466,7 @@ Visit: http://localhost:3000
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Cards Indexed | 348+ | PNG images in assets/ |
+| Cards Indexed | Multiple | PNG images in assets/ |
 | Search Latency | < 100ms | pgvector + IVFFlat |
 | Extraction Confidence | 95%+ | Average across all fields |
 | Phone Validation | 95%+ | E.164 format compliance |

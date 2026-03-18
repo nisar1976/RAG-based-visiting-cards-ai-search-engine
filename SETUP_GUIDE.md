@@ -79,16 +79,18 @@ You need:
 Edit `backend/.env`:
 
 ```env
-DATABASE_URL=postgresql+asyncpg://postgres:password@localhost/visitingcards
-OPENAI_API_KEY=sk-proj-your-actual-key-here
+DATABASE_URL=postgresql+asyncpg://[username]:[password]@[host]:[port]/[database]
+OPENAI_API_KEY=sk-proj-[YOUR_API_KEY]
 ASSETS_DIR=assets
 PGVECTOR_DIMENSIONS=3072
 ```
 
 Replace:
-- `postgres` with your PostgreSQL user (default is usually `postgres`)
-- `password` with your PostgreSQL password
-- `sk-proj-...` with your actual OpenAI API key
+- `[username]` with your PostgreSQL user (default is usually `postgres`)
+- `[password]` with your PostgreSQL password
+- `[host]` and `[port]` with your database server details (default: localhost:5432)
+- `[database]` with your database name (default: visitingcards)
+- `[YOUR_API_KEY]` with your actual OpenAI API key from https://platform.openai.com/api-keys
 
 #### 4. Install Python Dependencies
 
@@ -148,7 +150,7 @@ Or use the frontend's UI to trigger it. The endpoint will:
     "embedder_ready": true,
     "indexing_status": "running",
     "cards_indexed": 123,
-    "total_cards": 348
+    "total_cards": 348  // (or your actual card count)
   }
   ```
 
@@ -176,7 +178,7 @@ Expected response:
   "embedder_ready": true,
   "indexing_status": "done",
   "cards_indexed": 348,
-  "total_cards": 348,
+  "total_cards": 348,  // (your actual count)
   "indexing_error": null
 }
 ```
@@ -191,7 +193,7 @@ Expected response: Card JSON with full metadata including embedding
 ```bash
 curl http://localhost:8000/all-cards | jq '. | length'
 ```
-Expected: `348` (or number of PNG files in assets/)
+Expected: Count of all PNG files in assets/
 
 #### 4. Test Image Serving
 ```bash
@@ -205,7 +207,7 @@ psql visitingcards
 
 # Inside psql:
 SELECT COUNT(*) FROM cards;
--- Should return 348 (or number of images)
+-- Should return your card count
 
 SELECT embedding FROM cards LIMIT 1 \gx
 -- Should show 3072-dimensional vector
@@ -225,7 +227,7 @@ LIMIT 1;
 
 1. **Load Page**
    - Navigate to http://localhost:3000
-   - Verify CardsTable loads with all 348 cards
+   - Verify CardsTable loads with all indexed cards
    - Verify no console errors
 
 2. **Test Search**
@@ -262,14 +264,14 @@ LIMIT 1;
 | Operation | Expected Time | Notes |
 |-----------|---------------|-------|
 | Indexing 1 image | 2-5 seconds | OpenAI Vision API call (bottleneck) |
-| Indexing 348 images | ~25-30 min | Sequential processing with API rate limits |
+| Indexing all images | ~25-30 min | Sequential processing with API rate limits (varies with scale) |
 | Search query | <100ms | pgvector with ivfflat index |
 | Embedding generation | ~100ms | OpenAI API round-trip |
 | Frontend load | <500ms | After backend is ready |
 
 ### Cost Estimation
 
-**Per Run (348 cards):**
+**Per Run (full processing):**
 - Vision API: ~$0.50-1.00 (depends on image resolution, ~40KB avg)
 - Embeddings API: ~$0.15-0.20 (3072-dim model, ~20 tokens per card)
 - **Total: ~$0.70-1.20 per full reindex**
