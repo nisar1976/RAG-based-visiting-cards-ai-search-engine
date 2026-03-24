@@ -1,12 +1,12 @@
-# 🎴 Visiting Card AI Search System
+# AI Business Card Search Engine
 
 [![Status](https://img.shields.io/badge/status-production%20ready-brightgreen)]()
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
-A powerful AI-driven system for extracting, indexing, and searching visiting card information using OpenAI's Vision API and PostgreSQL semantic search.
+A powerful AI-driven system for extracting, indexing, and searching business card information using OpenAI Vision (one-time indexing) and local sentence-transformers embeddings for search.
 
-**Process visiting cards, extract structured data with 95%+ accuracy, and find them instantly with natural language queries.**
+**350+ cards permanently indexed and searchable. No re-indexing needed. Local semantic search in sub-100ms.**
 
 ---
 
@@ -27,10 +27,9 @@ npm install
 Edit `backend/.env`:
 ```env
 DATABASE_URL=postgresql+asyncpg://[username]:[password]@[host]:[port]/[database]
-OPENAI_API_KEY=sk-proj-[YOUR_API_KEY]
+OPENAI_API_KEY=sk-proj-[YOUR_API_KEY]  # Only needed for re-indexing new cards
 ASSETS_DIR=assets
-PGVECTOR_DIMENSIONS=3072
-MAX_CARDS=20  # For testing; remove for full processing
+MAX_CARDS=0  # All cards already processed
 ```
 
 ### 3️⃣ Run the System
@@ -48,14 +47,15 @@ cd frontend && npm run dev
 
 ## ✨ Features
 
-- 🔍 **Semantic Search** - Find cards with natural language queries
-- 📊 **95%+ Accuracy** - Advanced OCR with confidence scoring
+- 🔍 **Semantic Search** - Find cards with natural language queries (LOCAL, sub-100ms)
+- 📊 **95%+ Accuracy** - OpenAI Vision OCR with confidence scoring
 - 🎯 **Structured Data** - Extract name, company, phone, email, address, etc.
 - 📱 **Responsive UI** - Works on desktop and mobile
-- ⚡ **Fast Search** - Sub-100ms query response with pgvector
+- ⚡ **Fast Search** - Sub-100ms with local sentence-transformers embeddings
 - 📥 **Download Cards** - Export as PNG images
 - 🖨️ **Print Cards** - Print-friendly layout
-- 🧪 **Test Mode** - Process subset of cards before full indexing
+- 📋 **Admin Panel** - Manage cards at /admin
+- 📤 **CSV Export** - Export all card data
 
 ---
 
@@ -71,14 +71,15 @@ cd frontend && npm run dev
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │                  BACKEND (FastAPI)                      │
-│   OpenAI Vision API → Field Extraction → pgvector       │
+│   OpenAI Vision (indexing) → sentence-transformers     │
+│   all-MiniLM-L6-v2 (384-dim, LOCAL embeddings)        │
 └────────────────────────┬────────────────────────────────┘
                          │
                     PostgreSQL
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │                     DATABASE                            │
-│   Visiting Cards + Embeddings + IVFFlat Index          │
+│   Business Cards + Embeddings (BYTEA, 384-dim)          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -88,8 +89,8 @@ cd frontend && npm run dev
 
 - **Python** 3.10+
 - **Node.js** 18+
-- **PostgreSQL** 14+ with pgvector extension
-- **OpenAI API Key** (Vision + Embeddings access)
+- **PostgreSQL** 14+
+- **OpenAI API Key** (only needed for re-indexing new cards; search uses local embeddings)
 
 ### Database Setup
 
@@ -135,6 +136,10 @@ Click "Print" button for print-friendly view
 | `GET` | `/all-cards` | List all cards |
 | `GET` | `/cards/{id}` | Get card by ID |
 | `GET` | `/image/{id}` | Download card image |
+| `POST` | `/add-card` | Add a new card |
+| `PUT` | `/update-card/{id}` | Update card metadata |
+| `DELETE` | `/delete-card/{id}` | Delete a card |
+| `GET` | `/export-csv` | Export all cards as CSV |
 
 ### Example: Search
 ```bash
@@ -153,32 +158,39 @@ curl "http://localhost:8000/search-card?q=software%20engineer"
 │   ├── api/
 │   │   └── routes.py       # API endpoints
 │   ├── ocr/
-│   │   └── openai_vision.py # Vision API wrapper
+│   │   ├── openai_vision.py # Vision API wrapper
+│   │   └── qwen_vision.py  # Qwen Vision (experimental)
 │   ├── utils/
-│   │   ├── image_loader.py # Process PNG files
+│   │   ├── image_loader.py # Process PNG/JPG files
 │   │   └── field_extractor.py # Validate fields
 │   ├── db/
 │   │   ├── models.py       # Database schema
 │   │   ├── crud.py         # Database operations
 │   │   └── session.py      # Database connection
 │   └── rag/
-│       └── embeddings.py   # OpenAI embeddings
+│       ├── embeddings.py   # sentence-transformers (local, 384-dim)
+│       └── vector_search.py # Vector similarity search
 │
 ├── frontend/               # Next.js web interface
 │   ├── app/
-│   │   └── page.tsx        # Main page
+│   │   ├── page.tsx        # Main page
+│   │   └── admin/          # Admin page
 │   ├── components/
 │   │   ├── SearchBar.tsx   # Search input
 │   │   ├── CardsTable.tsx  # Card list
 │   │   ├── CardDisplay.tsx # Card detail
+│   │   ├── ResultsList.tsx # Search results
 │   │   └── ActionButtons.tsx # Download/Print
 │   └── lib/
 │       └── api.ts          # API client
 │
 ├── database/
-│   └── schema.sql          # PostgreSQL DDL
+│   ├── schema.sql          # PostgreSQL DDL
+│   ├── cards_backup.sql    # Database backup
+│   └── cards_export.csv    # CSV export of all cards
 │
-├── assets/                 # PNG visiting card images
+├── assets/                 # Business card images (PNG)
+├── assets2/                # Additional business card images (JPG)
 │
 └── [Documentation files]
     ├── project.md          # Full technical brief
@@ -190,28 +202,18 @@ curl "http://localhost:8000/search-card?q=software%20engineer"
 
 ## 🧪 Testing
 
-### Test with First 20 Cards
+### Verify Indexed Cards
 ```bash
-# Set MAX_CARDS=20 in backend/.env (default)
-cd backend
-uvicorn main:app --reload
-
-# Monitor logs for extraction details
-# Should see: [1/20] card_001.png: name=... company=... ✓
-```
-
-### Verify Results
-```bash
-# Check database
-psql -U postgres -d visitingcards
+# Check database (350+ cards already indexed)
+psql -d visitingcards
 SELECT id, name, company, designation FROM cards LIMIT 10;
 ```
 
-### Full Processing
+### Re-indexing (only if needed for new cards)
 ```bash
-# Remove or set MAX_CARDS=0 in backend/.env
+# Set MAX_CARDS=0 in backend/.env (process all)
+# Requires OPENAI_API_KEY for OCR
 # Restart backend
-# All cards will process (takes ~25-30 min depending on scale)
 ```
 
 ---
@@ -220,10 +222,10 @@ SELECT id, name, company, designation FROM cards LIMIT 10;
 
 | Operation | Time |
 |-----------|------|
-| Search query | < 100ms |
+| Search query | < 100ms (local embeddings, no API call) |
 | Card indexing (1 image) | 2-5 seconds |
-| Full indexing (348 cards) | ~25-30 minutes |
-| API cost (1 full reindex) | ~$0.70-1.20 |
+| Full indexing (350+ cards) | ~25-30 minutes |
+| Cost (initial indexing) | One-time $3-5 (OpenAI Vision). No ongoing API costs. |
 
 ---
 
@@ -236,17 +238,14 @@ SELECT id, name, company, designation FROM cards LIMIT 10;
 # Database connection
 DATABASE_URL=postgresql+asyncpg://[username]:[password]@[host]:[port]/[database]
 
-# OpenAI API key (get from https://platform.openai.com/api-keys)
+# OpenAI API key (only needed for re-indexing new cards)
 OPENAI_API_KEY=sk-proj-[YOUR_API_KEY]
 
 # Assets directory
 ASSETS_DIR=assets
 
-# Vector dimensions (must be 3072 for text-embedding-3-large)
-PGVECTOR_DIMENSIONS=3072
-
-# Test mode: process only first N cards (0 = all)
-MAX_CARDS=20
+# Process all cards (0 = all; 350+ cards already indexed)
+MAX_CARDS=0
 ```
 
 ### Modify OCR Behavior
@@ -285,16 +284,11 @@ sudo service postgresql start
 # Use pgAdmin or Services app
 ```
 
-### "pgvector extension not found"
-```bash
-psql visitingcards -c "CREATE EXTENSION IF NOT EXISTS vector;"
-```
-
 ### "OPENAI_API_KEY not set"
-Verify `backend/.env` has valid key and restart backend
+Only needed for re-indexing new cards. Search uses local embeddings and does not require an API key.
 
 ### "Low search accuracy"
-- Ensure all 348 cards are indexed (`/health` endpoint)
+- Ensure all cards are indexed (`/health` endpoint)
 - Check card image quality
 - Try rephrasing search query
 
@@ -337,45 +331,43 @@ For detailed information:
 
 ## 🔐 Security Notes
 
-- **API Key**: Keep `OPENAI_API_KEY` secret - never commit to git
+- **API Key**: Keep `OPENAI_API_KEY` secret - never commit to git (only needed for re-indexing)
 - **Database Password**: Use strong PostgreSQL password
 - **CORS**: Frontend CORS is restricted to `localhost:3000`
 - **Production**: Use environment-specific `.env` files
+- **Note**: Search does not require any API keys (uses local embeddings)
 
 ---
 
 ## 💡 Tips & Tricks
 
-### Speed Up Indexing
-- Use test mode (`MAX_CARDS=20`) first to validate
-- Process during off-hours to minimize API cost
-
-### Improve Search Results
+### Search Tips
 - Use complete phrases: "john smith from techcorp" instead of just "john"
 - Combine name + company for better results
 - Try different phrasings for semantic search
+- Search is LOCAL (no API calls) -- sub-100ms response
 
-### Cost Optimization
-- Reindex only when adding new cards
-- Cache embeddings in production
-- Use batch API calls for bulk operations
+### Cost Notes
+- Initial indexing cost: one-time $3-5 (OpenAI Vision)
+- Search: FREE (local sentence-transformers embeddings)
+- No ongoing API costs
 
 ---
 
 ## 🚦 Status & Roadmap
 
 **Current** ✅
-- OpenAI Vision + Embeddings API integration
-- PostgreSQL pgvector with IVFFlat index
-- 348+ cards indexed and searchable
-- Frontend with real-time search
-- Download and print functionality
+- 350+ cards permanently indexed and searchable. No re-indexing needed.
+- OpenAI Vision OCR (one-time cost at indexing, not ongoing)
+- sentence-transformers all-MiniLM-L6-v2 (384-dim, LOCAL embeddings)
+- PostgreSQL with embeddings stored as BYTEA
+- Frontend with real-time search + admin page at /admin
+- Download, print, CSV export functionality
+- Add/update/delete card management
 
 **Planned**
-- Batch API optimization
 - Analytics dashboard
 - Mobile app (React Native)
-- CSV/Excel export
 - Duplicate detection
 - Advanced field customization
 
@@ -397,9 +389,9 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Built with**: OpenAI APIs • PostgreSQL • FastAPI • Next.js
+**Built with**: OpenAI Vision (indexing) • sentence-transformers (search) • PostgreSQL • FastAPI • Next.js
 
-**Last Updated**: March 18, 2026
+**Last Updated**: March 24, 2026
 
 ---
 

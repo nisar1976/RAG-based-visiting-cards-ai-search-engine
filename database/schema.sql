@@ -2,12 +2,13 @@
 -- which works without the pgvector C extension (useful on Windows)
 
 CREATE TABLE IF NOT EXISTS cards (
-    id           SERIAL PRIMARY KEY,
+    id           INTEGER PRIMARY KEY,
     name         TEXT,
     designation  TEXT,
     company      TEXT,
     country      TEXT,
     phone        TEXT,
+    cell         TEXT,
     email        TEXT,
     address      TEXT,
     full_text    TEXT,

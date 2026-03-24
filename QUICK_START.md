@@ -72,7 +72,7 @@ npm run dev
 
 1. Open **http://localhost:3000**
 2. Click **"Index Cards (First Run)"** button
-3. ⏳ Wait 5-15 minutes (processing 348+ images)
+3. ⏳ Wait 5-15 minutes (processing 350+ images)
    - You'll see progress in backend terminal
 4. ✅ When done, you're ready to search!
 
@@ -89,11 +89,11 @@ npm run dev
 
 **`backend/.env`** - Update if needed:
 ```
-DATABASE_URL=postgresql+asyncpg://postgres:password@localhost/visitingcards
+DATABASE_URL=postgresql+asyncpg://user:****@localhost/visitingcards
 ASSETS_DIR=../assets
 ```
 
-Replace `password` with your PostgreSQL password if different from default.
+Replace `user` and `****` with your PostgreSQL username and password.
 
 ## 📊 System Architecture
 
@@ -160,7 +160,7 @@ AI_chatbot_visitingcards/
 │   └── package.json          # Dependencies
 ├── database/schema.sql         # PostgreSQL DDL
 ├── embeddings/                # FAISS index (auto-generated)
-├── assets/                    # 348+ PNG visiting cards
+├── assets/                    # 350+ PNG business cards
 └── requirements.txt           # Python dependencies
 ```
 
@@ -168,7 +168,7 @@ AI_chatbot_visitingcards/
 
 | Operation | Time |
 |-----------|------|
-| First indexing (348+ cards) | 5-15 minutes |
+| First indexing (350+ cards) | 5-15 minutes |
 | Search query (top-1) | <1 second |
 | Image download | <1 second |
 | Model download (first run) | 2-5 minutes |
@@ -215,7 +215,7 @@ psql -U postgres -c "SELECT version();"
 ✅ **7 Fields**: Name, Designation, Company, Country, Phone, Email, Address
 ✅ **Fully Offline**: No external APIs after initial setup
 ✅ **Responsive UI**: Desktop & mobile friendly
-✅ **Print Support**: Print visiting card directly from UI
+✅ **Print Support**: Print business card directly from UI
 
 ## 🎓 Next Steps
 

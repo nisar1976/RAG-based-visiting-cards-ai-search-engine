@@ -1,57 +1,31 @@
-# Environment & Secrets
-.env
-.env.local
-.env.*.local
-.env.production.local
+# Ignore everything by default
+*
 
-# Virtual Environments
-.venv/
-venv/
-ENV/
-env/
+# Allow only hint/documentation files
+!.gitignore
+!LICENSE
+!README.md
+!project.md
+!QUICK_START.md
+!SETUP_AND_RUN.md
+!CLAUDE.md
+!Qwen2.5-VL-7B-Instruct.txt
 
-# Python Cache
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
-dist/
-build/
-.pytest_cache/
+# Allow database schema (DDL only, no data)
+!database/
+database/*
+!database/schema.sql
 
-# Node.js / Frontend
-node_modules/
-.next/
-out/
-.vercel
+# Allow env example templates
+!backend/
+backend/*
+!backend/.env.example
 
-# IDE / Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
+!frontend/
+frontend/*
+!frontend/.env.local.example
 
-# Generated/Binary Files
-embeddings/
-*.db
-*.sqlite
-
-# Logs
-*.log
-backend_server.log
-frontend_server.log
-indexing_result.log
-
-# OS
-Thumbs.db
-.windows-rename-on-reboot
-
-# Files to exclude per user request
-requirements.txt
-specification.md
-skills.md
-assets/
+# Allow screenshots placeholder
+!screenshots/
+screenshots/*
+!screenshots/README.txt
